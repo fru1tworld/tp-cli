@@ -1,6 +1,6 @@
 # tp
 
-> 🌍 [English](./README.md) | [한국어](./README.ko.md) | [中文](./README.zh.md)
+> 🌍 [English](../README.md) | [한국어](./README.ko.md) | [中文](./README.zh.md)
 
 ディレクトリをブックマークして、どこからでもテレポート。
 

@@ -1,6 +1,6 @@
 # tp
 
-> 🌍 [한국어](./README.ko.md) | [日本語](./README.ja.md) | [中文](./README.zh.md)
+> 🌍 [한국어](./docs/README.ko.md) | [日本語](./docs/README.ja.md) | [中文](./docs/README.zh.md)
 
 Bookmark directories and teleport anywhere.
 

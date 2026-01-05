@@ -1,6 +1,6 @@
 # tp
 
-> 🌍 [English](./README.md) | [日本語](./README.ja.md) | [中文](./README.zh.md)
+> 🌍 [English](../README.md) | [日本語](./README.ja.md) | [中文](./README.zh.md)
 
 디렉토리를 북마크하고 어디서든 순간이동하세요.
 
