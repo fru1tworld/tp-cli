@@ -23,9 +23,44 @@ tp() {
         echo "$output"
     fi
 }
+
+# Tab 자동완성 (Zsh)
+_tp_completions_zsh() {
+    local commands="add del list help"
+    local aliases=$(tp-cli --completions 2>/dev/null)
+    case "$words[2]" in
+        del) _values 'alias' ${(f)aliases} ;;
+        add|list|help) ;;
+        *) _values 'command' $commands ${(f)aliases} ;;
+    esac
+}
+compdef _tp_completions_zsh tp
+
+# Tab 자동완성 (Bash)
+_tp_completions() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local commands="add del list help"
+    case "$prev" in
+        tp) COMPREPLY=($(compgen -W "$commands $(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        del) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        *) COMPREPLY=() ;;
+    esac
+}
+complete -F _tp_completions tp
 ```
 
 터미널을 재시작하거나 `source ~/.zshrc`를 실행하세요.
+
+## Tab 자동완성
+
+설정 후 `Tab` 키를 눌러 자동완성할 수 있습니다:
+
+```bash
+tp <TAB>        # 표시: add, del, list, help + 등록된 모든 alias
+tp del <TAB>    # 표시: 등록된 alias만
+tp wo<TAB>      # 완성: tp work
+```
 
 ## 사용법
 

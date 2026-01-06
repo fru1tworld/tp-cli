@@ -23,9 +23,44 @@ tp() {
         echo "$output"
     fi
 }
+
+# Tab补全 (Zsh)
+_tp_completions_zsh() {
+    local commands="add del list help"
+    local aliases=$(tp-cli --completions 2>/dev/null)
+    case "$words[2]" in
+        del) _values 'alias' ${(f)aliases} ;;
+        add|list|help) ;;
+        *) _values 'command' $commands ${(f)aliases} ;;
+    esac
+}
+compdef _tp_completions_zsh tp
+
+# Tab补全 (Bash)
+_tp_completions() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local commands="add del list help"
+    case "$prev" in
+        tp) COMPREPLY=($(compgen -W "$commands $(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        del) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        *) COMPREPLY=() ;;
+    esac
+}
+complete -F _tp_completions tp
 ```
 
 重启终端或运行 `source ~/.zshrc`。
+
+## Tab补全
+
+设置完成后，按 `Tab` 键可自动补全：
+
+```bash
+tp <TAB>        # 显示: add, del, list, help + 所有已注册的alias
+tp del <TAB>    # 显示: 仅已注册的alias
+tp wo<TAB>      # 补全为: tp work
+```
 
 ## 使用方法
 

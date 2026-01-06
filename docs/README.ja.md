@@ -23,9 +23,44 @@ tp() {
         echo "$output"
     fi
 }
+
+# Tab補完 (Zsh)
+_tp_completions_zsh() {
+    local commands="add del list help"
+    local aliases=$(tp-cli --completions 2>/dev/null)
+    case "$words[2]" in
+        del) _values 'alias' ${(f)aliases} ;;
+        add|list|help) ;;
+        *) _values 'command' $commands ${(f)aliases} ;;
+    esac
+}
+compdef _tp_completions_zsh tp
+
+# Tab補完 (Bash)
+_tp_completions() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local commands="add del list help"
+    case "$prev" in
+        tp) COMPREPLY=($(compgen -W "$commands $(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        del) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        *) COMPREPLY=() ;;
+    esac
+}
+complete -F _tp_completions tp
 ```
 
 ターミナルを再起動するか、`source ~/.zshrc`を実行してください。
+
+## Tab補完
+
+設定後、`Tab`キーで自動補完できます：
+
+```bash
+tp <TAB>        # 表示: add, del, list, help + 登録済みの全alias
+tp del <TAB>    # 表示: 登録済みのaliasのみ
+tp wo<TAB>      # 補完: tp work
+```
 
 ## 使い方
 
