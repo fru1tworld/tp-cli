@@ -130,6 +130,13 @@ function help(): void {
   console.log("  tp help           Show this help");
 }
 
+function completions(): void {
+  const bookmarks = loadBookmarks();
+  for (const b of bookmarks) {
+    console.log(b.alias);
+  }
+}
+
 function main(): void {
   const args = process.argv.slice(2);
   const command = args[0];
@@ -148,6 +155,9 @@ function main(): void {
     case "-h":
     case "--help":
       help();
+      break;
+    case "--completions":
+      completions();
       break;
     case undefined:
       list();
