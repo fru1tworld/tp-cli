@@ -82,6 +82,72 @@ function del(alias: string): void {
   console.log(`Deleted: ${alias}`);
 }
 
+function gc(): void {
+  const bookmarks = loadBookmarks();
+  const invalidBookmarks: Bookmark[] = [];
+  const validBookmarks: Bookmark[] = [];
+
+  for (const b of bookmarks) {
+    if (fs.existsSync(b.path)) {
+      validBookmarks.push(b);
+    } else {
+      invalidBookmarks.push(b);
+    }
+  }
+
+  if (invalidBookmarks.length === 0) {
+    console.log("No invalid bookmarks found. All directories exist.");
+    return;
+  }
+
+  console.log(`Found ${invalidBookmarks.length} invalid bookmark(s):\n`);
+  for (const b of invalidBookmarks) {
+    console.log(`  ${b.alias.padEnd(15)} -> ${b.path}`);
+  }
+
+  saveBookmarks(validBookmarks);
+  console.log(`\nRemoved ${invalidBookmarks.length} invalid bookmark(s).`);
+}
+
+function ch(oldAlias: string, newAlias: string): void {
+  if (!oldAlias || !newAlias) {
+    console.log("Usage: tp ch <old_alias> <new_alias>");
+    process.exit(1);
+  }
+
+  if (oldAlias === newAlias) {
+    console.log("Old alias and new alias are the same.");
+    process.exit(1);
+  }
+
+  const bookmarks = loadBookmarks();
+  const index = bookmarks.findIndex((b) => b.alias === oldAlias);
+
+  if (index === -1) {
+    console.log(`Alias '${oldAlias}' not found.`);
+    process.exit(1);
+  }
+
+  const existingNewAlias = bookmarks.find((b) => b.alias === newAlias);
+  if (existingNewAlias) {
+    if (existingNewAlias.path === bookmarks[index].path) {
+      // Same path, remove old alias
+      console.log(`'${oldAlias}' and '${newAlias}' point to the same directory: ${existingNewAlias.path}`);
+      bookmarks.splice(index, 1);
+      saveBookmarks(bookmarks);
+      console.log(`Removed duplicate alias '${oldAlias}'. Keeping '${newAlias}'.`);
+    } else {
+      console.log(`Alias '${newAlias}' already exists with a different path.`);
+      process.exit(1);
+    }
+    return;
+  }
+
+  bookmarks[index].alias = newAlias;
+  saveBookmarks(bookmarks);
+  console.log(`Renamed: '${oldAlias}' -> '${newAlias}'`);
+}
+
 function go(alias: string): void {
   if (!alias) {
     console.log("Usage: tp <alias>");
@@ -123,11 +189,13 @@ function list(): void {
 function help(): void {
   console.log("tp - Teleport to bookmarked directories\n");
   console.log("Usage:");
-  console.log("  tp <alias>        Go to bookmarked directory");
-  console.log("  tp add <alias>    Bookmark current directory");
-  console.log("  tp del <alias>    Delete bookmark");
-  console.log("  tp list           Show all bookmarks");
-  console.log("  tp help           Show this help");
+  console.log("  tp <alias>            Go to bookmarked directory");
+  console.log("  tp add <alias>        Bookmark current directory");
+  console.log("  tp del <alias>        Delete bookmark");
+  console.log("  tp ch <old> <new>     Rename alias (or merge if same path)");
+  console.log("  tp gc                 Remove bookmarks for non-existent directories");
+  console.log("  tp list               Show all bookmarks");
+  console.log("  tp help               Show this help");
 }
 
 function completions(): void {
@@ -147,6 +215,12 @@ function main(): void {
       break;
     case "del":
       del(args[1]);
+      break;
+    case "ch":
+      ch(args[1], args[2]);
+      break;
+    case "gc":
+      gc();
       break;
     case "list":
       list();

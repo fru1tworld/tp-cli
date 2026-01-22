@@ -26,11 +26,11 @@ tp() {
 
 # Tab completion (Zsh)
 _tp_completions_zsh() {
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     local aliases=$(tp-cli --completions 2>/dev/null)
     case "$words[2]" in
-        del) _values 'alias' ${(f)aliases} ;;
-        add|list|help) ;;
+        del|ch) _values 'alias' ${(f)aliases} ;;
+        add|gc|list|help) ;;
         *) _values 'command' $commands ${(f)aliases} ;;
     esac
 }
@@ -40,10 +40,10 @@ compdef _tp_completions_zsh tp
 _tp_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     case "$prev" in
         tp) COMPREPLY=($(compgen -W "$commands $(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
-        del) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        del|ch) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
         *) COMPREPLY=() ;;
     esac
 }
@@ -57,8 +57,9 @@ Restart your terminal or run `source ~/.zshrc`.
 After setup, press `Tab` to autocomplete:
 
 ```bash
-tp <TAB>        # Shows: add, del, list, help + all bookmarked aliases
+tp <TAB>        # Shows: add, del, ch, gc, list, help + all bookmarked aliases
 tp del <TAB>    # Shows: bookmarked aliases only
+tp ch <TAB>     # Shows: bookmarked aliases only
 tp wo<TAB>      # Completes to: tp work
 ```
 
@@ -76,6 +77,12 @@ tp list
 
 # Delete bookmark
 tp del work
+
+# Rename alias
+tp ch work project
+
+# Clean up bookmarks pointing to non-existent directories
+tp gc
 
 # Help
 tp help

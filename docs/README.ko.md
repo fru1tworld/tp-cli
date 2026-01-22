@@ -26,11 +26,11 @@ tp() {
 
 # Tab 자동완성 (Zsh)
 _tp_completions_zsh() {
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     local aliases=$(tp-cli --completions 2>/dev/null)
     case "$words[2]" in
-        del) _values 'alias' ${(f)aliases} ;;
-        add|list|help) ;;
+        del|ch) _values 'alias' ${(f)aliases} ;;
+        add|gc|list|help) ;;
         *) _values 'command' $commands ${(f)aliases} ;;
     esac
 }
@@ -40,10 +40,10 @@ compdef _tp_completions_zsh tp
 _tp_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     case "$prev" in
         tp) COMPREPLY=($(compgen -W "$commands $(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
-        del) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        del|ch) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
         *) COMPREPLY=() ;;
     esac
 }
@@ -57,8 +57,9 @@ complete -F _tp_completions tp
 설정 후 `Tab` 키를 눌러 자동완성할 수 있습니다:
 
 ```bash
-tp <TAB>        # 표시: add, del, list, help + 등록된 모든 alias
+tp <TAB>        # 표시: add, del, ch, gc, list, help + 등록된 모든 alias
 tp del <TAB>    # 표시: 등록된 alias만
+tp ch <TAB>     # 표시: 등록된 alias만
 tp wo<TAB>      # 완성: tp work
 ```
 
@@ -76,6 +77,12 @@ tp list
 
 # 북마크 삭제
 tp del work
+
+# 별칭 이름 변경
+tp ch work project
+
+# 존재하지 않는 디렉토리 북마크 정리
+tp gc
 
 # 도움말
 tp help

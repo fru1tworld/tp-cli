@@ -26,11 +26,11 @@ tp() {
 
 # Tab補完 (Zsh)
 _tp_completions_zsh() {
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     local aliases=$(tp-cli --completions 2>/dev/null)
     case "$words[2]" in
-        del) _values 'alias' ${(f)aliases} ;;
-        add|list|help) ;;
+        del|ch) _values 'alias' ${(f)aliases} ;;
+        add|gc|list|help) ;;
         *) _values 'command' $commands ${(f)aliases} ;;
     esac
 }
@@ -40,10 +40,10 @@ compdef _tp_completions_zsh tp
 _tp_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     case "$prev" in
         tp) COMPREPLY=($(compgen -W "$commands $(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
-        del) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        del|ch) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
         *) COMPREPLY=() ;;
     esac
 }
@@ -57,8 +57,9 @@ complete -F _tp_completions tp
 設定後、`Tab`キーで自動補完できます：
 
 ```bash
-tp <TAB>        # 表示: add, del, list, help + 登録済みの全alias
+tp <TAB>        # 表示: add, del, ch, gc, list, help + 登録済みの全alias
 tp del <TAB>    # 表示: 登録済みのaliasのみ
+tp ch <TAB>     # 表示: 登録済みのaliasのみ
 tp wo<TAB>      # 補完: tp work
 ```
 
@@ -76,6 +77,12 @@ tp list
 
 # ブックマークを削除
 tp del work
+
+# エイリアス名を変更
+tp ch work project
+
+# 存在しないディレクトリのブックマークを整理
+tp gc
 
 # ヘルプ
 tp help

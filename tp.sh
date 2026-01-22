@@ -17,7 +17,7 @@ tp() {
 _tp_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local commands="add del list help"
+    local commands="add del ch gc list help"
 
     case "$prev" in
         tp)
@@ -25,12 +25,12 @@ _tp_completions() {
             local aliases=$(tp-cli --completions 2>/dev/null)
             COMPREPLY=($(compgen -W "$commands $aliases" -- "$cur"))
             ;;
-        del)
-            # After 'del': show only aliases
+        del|ch)
+            # After 'del' or 'ch': show only aliases
             local aliases=$(tp-cli --completions 2>/dev/null)
             COMPREPLY=($(compgen -W "$aliases" -- "$cur"))
             ;;
-        add|list|help)
+        add|gc|list|help)
             # No completion after these
             COMPREPLY=()
             ;;
@@ -42,14 +42,14 @@ _tp_completions() {
 
 # Zsh completion
 _tp_completions_zsh() {
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     local aliases=$(tp-cli --completions 2>/dev/null)
 
     case "$words[2]" in
-        del)
+        del|ch)
             _values 'alias' ${(f)aliases}
             ;;
-        add|list|help)
+        add|gc|list|help)
             ;;
         *)
             _values 'command' $commands ${(f)aliases}

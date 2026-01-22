@@ -1,6 +1,6 @@
 {
   "name": "@fru1tworld/tp",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Teleport to bookmarked directories",
   "main": "dist/index.js",
   "bin": {

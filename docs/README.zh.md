@@ -26,11 +26,11 @@ tp() {
 
 # Tab补全 (Zsh)
 _tp_completions_zsh() {
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     local aliases=$(tp-cli --completions 2>/dev/null)
     case "$words[2]" in
-        del) _values 'alias' ${(f)aliases} ;;
-        add|list|help) ;;
+        del|ch) _values 'alias' ${(f)aliases} ;;
+        add|gc|list|help) ;;
         *) _values 'command' $commands ${(f)aliases} ;;
     esac
 }
@@ -40,10 +40,10 @@ compdef _tp_completions_zsh tp
 _tp_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local commands="add del list help"
+    local commands="add del ch gc list help"
     case "$prev" in
         tp) COMPREPLY=($(compgen -W "$commands $(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
-        del) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
+        del|ch) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
         *) COMPREPLY=() ;;
     esac
 }
@@ -57,8 +57,9 @@ complete -F _tp_completions tp
 设置完成后，按 `Tab` 键可自动补全：
 
 ```bash
-tp <TAB>        # 显示: add, del, list, help + 所有已注册的alias
+tp <TAB>        # 显示: add, del, ch, gc, list, help + 所有已注册的alias
 tp del <TAB>    # 显示: 仅已注册的alias
+tp ch <TAB>     # 显示: 仅已注册的alias
 tp wo<TAB>      # 补全为: tp work
 ```
 
@@ -76,6 +77,12 @@ tp list
 
 # 删除收藏
 tp del work
+
+# 重命名别名
+tp ch work project
+
+# 清理指向不存在目录的收藏
+tp gc
 
 # 帮助
 tp help
