@@ -186,6 +186,10 @@ function list(): void {
   }
 }
 
+function version(): void {
+  console.log("1.2.1");
+}
+
 function help(): void {
   console.log("tp - Teleport to bookmarked directories\n");
   console.log("Usage:");
@@ -196,6 +200,7 @@ function help(): void {
   console.log("  tp gc                 Remove bookmarks for non-existent directories");
   console.log("  tp list               Show all bookmarks");
   console.log("  tp help               Show this help");
+  console.log("  tp -v, --version      Show version");
 }
 
 function completions(): void {
@@ -229,6 +234,10 @@ function main(): void {
     case "-h":
     case "--help":
       help();
+      break;
+    case "-v":
+    case "--version":
+      version();
       break;
     case "--completions":
       completions();
