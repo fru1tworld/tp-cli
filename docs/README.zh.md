@@ -52,6 +52,26 @@ complete -F _tp_completions tp
 
 重启终端或运行 `source ~/.zshrc`。
 
+### Nushell
+
+添加到 `config.nu`（通常在 `~/.config/nushell/config.nu`）：
+
+```nu
+source /path/to/tp.nu
+# 或者 npm install -g 后：
+# source (npm root -g | str trim | path join "@fru1tworld/tp" "tp.nu")
+```
+
+### Fish
+
+添加到 `config.fish`（通常在 `~/.config/fish/config.fish`）：
+
+```fish
+source /path/to/tp.fish
+# 或者 npm install -g 后：
+# source (npm root -g)/@fru1tworld/tp/tp.fish
+```
+
 ## Tab补全
 
 设置完成后，按 `Tab` 键可自动补全：
@@ -108,8 +128,9 @@ tp list
 
 ## 系统要求
 
-- Node.js >= 16
-- macOS / Linux (Bash 或 Zsh)
+- Node.js >= 20
+- macOS / Linux
+- 支持的 Shell: Bash, Zsh, Fish, Nushell
 
 ## 许可证
 

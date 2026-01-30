@@ -52,6 +52,26 @@ complete -F _tp_completions tp
 
 Restart your terminal or run `source ~/.zshrc`.
 
+### Nushell
+
+Add to your `config.nu` (usually `~/.config/nushell/config.nu`):
+
+```nu
+source /path/to/tp.nu
+# Or after npm install -g:
+# source (npm root -g | str trim | path join "@fru1tworld/tp" "tp.nu")
+```
+
+### Fish
+
+Add to your `config.fish` (usually `~/.config/fish/config.fish`):
+
+```fish
+source /path/to/tp.fish
+# Or after npm install -g:
+# source (npm root -g)/@fru1tworld/tp/tp.fish
+```
+
 ## Tab Completion
 
 After setup, press `Tab` to autocomplete:
@@ -108,8 +128,9 @@ tp list
 
 ## Requirements
 
-- Node.js >= 16
-- macOS / Linux (Bash or Zsh)
+- Node.js >= 20
+- macOS / Linux
+- Supported shells: Bash, Zsh, Fish, Nushell
 
 ## License
 

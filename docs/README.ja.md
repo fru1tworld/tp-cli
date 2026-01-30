@@ -52,6 +52,26 @@ complete -F _tp_completions tp
 
 ターミナルを再起動するか、`source ~/.zshrc`を実行してください。
 
+### Nushell
+
+`config.nu`（通常 `~/.config/nushell/config.nu`）に追加してください：
+
+```nu
+source /path/to/tp.nu
+# npm install -g の場合：
+# source (npm root -g | str trim | path join "@fru1tworld/tp" "tp.nu")
+```
+
+### Fish
+
+`config.fish`（通常 `~/.config/fish/config.fish`）に追加してください：
+
+```fish
+source /path/to/tp.fish
+# npm install -g の場合：
+# source (npm root -g)/@fru1tworld/tp/tp.fish
+```
+
 ## Tab補完
 
 設定後、`Tab`キーで自動補完できます：
@@ -108,8 +128,9 @@ tp list
 
 ## 必要条件
 
-- Node.js >= 16
-- macOS / Linux (Bash または Zsh)
+- Node.js >= 20
+- macOS / Linux
+- 対応シェル: Bash, Zsh, Fish, Nushell
 
 ## ライセンス
 
