@@ -49,11 +49,11 @@ describe("main() function", () => {
   });
 
   it("routes -v flag", () => {
-    expect(main(["-v"], tmpDir, dataFile)).toBe("1.2.1");
+    expect(main(["-v"], tmpDir, dataFile)).toBe("1.4.0");
   });
 
   it("routes --version flag", () => {
-    expect(main(["--version"], tmpDir, dataFile)).toBe("1.2.1");
+    expect(main(["--version"], tmpDir, dataFile)).toBe("1.4.0");
   });
 
   it("routes list command", () => {
@@ -99,6 +99,20 @@ describe("main() function", () => {
     expect(output).toBe(`__TP_CD__:${tmpDir}`);
   });
 
+  it("matches alias case-insensitively by default", () => {
+    main(["add", "rfc"], tmpDir, dataFile);
+    expect(main(["RFC"], tmpDir, dataFile)).toBe(`__TP_CD__:${tmpDir}`);
+    expect(main(["Rfc"], tmpDir, dataFile)).toBe(`__TP_CD__:${tmpDir}`);
+  });
+
+  it("respects caseSensitive config", () => {
+    const config = { caseSensitive: true };
+    main(["add", "rfc"], tmpDir, dataFile, config);
+    expect(() => main(["RFC"], tmpDir, dataFile, config)).toThrow(
+      CommandError
+    );
+  });
+
   it("throws CommandError for unknown alias", () => {
     expect(() => main(["nonexistent"], tmpDir, dataFile)).toThrow(
       CommandError
@@ -112,7 +126,7 @@ describe("CLI subprocess integration", () => {
   });
 
   it("shows version with --version", () => {
-    expect(runCli("--version")).toBe("1.2.1");
+    expect(runCli("--version")).toBe("1.4.0");
   });
 
   it("shows empty list", () => {

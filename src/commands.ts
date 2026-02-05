@@ -8,6 +8,30 @@ export interface Bookmark {
   createdAt: number;
 }
 
+export interface TpConfig {
+  caseSensitive?: boolean;
+}
+
+export function getConfigFile(dataDir?: string): string {
+  return path.join(dataDir ?? getDataDir(), "config.json");
+}
+
+export function loadConfig(configFile: string): TpConfig {
+  try {
+    const data = fs.readFileSync(configFile, "utf-8");
+    return JSON.parse(data);
+  } catch {
+    return {};
+  }
+}
+
+function aliasMatch(a: string, b: string, caseSensitive: boolean): boolean {
+  if (caseSensitive) {
+    return a === b;
+  }
+  return a.toLowerCase() === b.toLowerCase();
+}
+
 export class CommandError extends Error {
   constructor(message: string) {
     super(message);
@@ -43,17 +67,25 @@ export function saveBookmarks(dataFile: string, bookmarks: Bookmark[]): void {
   fs.writeFileSync(dataFile, JSON.stringify(bookmarks, null, 2));
 }
 
-export function add(alias: string, cwd: string, dataFile: string): string {
+export function add(
+  alias: string,
+  cwd: string,
+  dataFile: string,
+  config: TpConfig = {}
+): string {
   if (!alias) {
     throw new CommandError("Usage: tp add <alias>");
   }
 
+  const caseSensitive = config.caseSensitive ?? false;
   const bookmarks = loadBookmarks(dataFile);
 
-  const existingAlias = bookmarks.find((b) => b.alias === alias);
+  const existingAlias = bookmarks.find((b) =>
+    aliasMatch(b.alias, alias, caseSensitive)
+  );
   if (existingAlias) {
     throw new CommandError(
-      `Alias '${alias}' already exists. Use 'tp del ${alias}' first.`
+      `Alias '${existingAlias.alias}' already exists. Use 'tp del ${existingAlias.alias}' first.`
     );
   }
 
@@ -74,13 +106,20 @@ export function add(alias: string, cwd: string, dataFile: string): string {
   return `Added: ${alias} -> ${cwd}`;
 }
 
-export function del(alias: string, dataFile: string): string {
+export function del(
+  alias: string,
+  dataFile: string,
+  config: TpConfig = {}
+): string {
   if (!alias) {
     throw new CommandError("Usage: tp del <alias>");
   }
 
+  const caseSensitive = config.caseSensitive ?? false;
   const bookmarks = loadBookmarks(dataFile);
-  const index = bookmarks.findIndex((b) => b.alias === alias);
+  const index = bookmarks.findIndex((b) =>
+    aliasMatch(b.alias, alias, caseSensitive)
+  );
 
   if (index === -1) {
     throw new CommandError(`Alias '${alias}' not found.`);
@@ -122,24 +161,31 @@ export function gc(dataFile: string): string {
 export function ch(
   oldAlias: string,
   newAlias: string,
-  dataFile: string
+  dataFile: string,
+  config: TpConfig = {}
 ): string {
   if (!oldAlias || !newAlias) {
     throw new CommandError("Usage: tp ch <old_alias> <new_alias>");
   }
 
-  if (oldAlias === newAlias) {
+  const caseSensitive = config.caseSensitive ?? false;
+
+  if (aliasMatch(oldAlias, newAlias, caseSensitive)) {
     throw new CommandError("Old alias and new alias are the same.");
   }
 
   const bookmarks = loadBookmarks(dataFile);
-  const index = bookmarks.findIndex((b) => b.alias === oldAlias);
+  const index = bookmarks.findIndex((b) =>
+    aliasMatch(b.alias, oldAlias, caseSensitive)
+  );
 
   if (index === -1) {
     throw new CommandError(`Alias '${oldAlias}' not found.`);
   }
 
-  const existingNewAlias = bookmarks.find((b) => b.alias === newAlias);
+  const existingNewAlias = bookmarks.find((b) =>
+    aliasMatch(b.alias, newAlias, caseSensitive)
+  );
   if (existingNewAlias) {
     if (existingNewAlias.path === bookmarks[index].path) {
       const lines: string[] = [];
@@ -164,13 +210,20 @@ export function ch(
   return `Renamed: '${oldAlias}' -> '${newAlias}'`;
 }
 
-export function go(alias: string, dataFile: string): string {
+export function go(
+  alias: string,
+  dataFile: string,
+  config: TpConfig = {}
+): string {
   if (!alias) {
     throw new CommandError("Usage: tp <alias>");
   }
 
+  const caseSensitive = config.caseSensitive ?? false;
   const bookmarks = loadBookmarks(dataFile);
-  const bookmark = bookmarks.find((b) => b.alias === alias);
+  const bookmark = bookmarks.find((b) =>
+    aliasMatch(b.alias, alias, caseSensitive)
+  );
 
   if (!bookmark) {
     throw new CommandError(`Alias '${alias}' not found.`);
@@ -200,7 +253,7 @@ export function list(dataFile: string): string {
 }
 
 export function version(): string {
-  return "1.3.0";
+  return "1.4.0";
 }
 
 export function help(): string {

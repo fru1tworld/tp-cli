@@ -4,9 +4,12 @@ import * as path from "path";
 import * as os from "os";
 import {
   Bookmark,
+  TpConfig,
   CommandError,
   getDataDir,
   getDataFile,
+  getConfigFile,
+  loadConfig,
   init,
   loadBookmarks,
   saveBookmarks,
@@ -113,6 +116,19 @@ describe("add", () => {
     expect(() => add("dup", "/b", dataFile)).toThrow("already exists");
   });
 
+  it("throws on case-insensitive duplicate alias by default", () => {
+    add("Work", "/a", dataFile);
+    expect(() => add("work", "/b", dataFile)).toThrow("already exists");
+    expect(() => add("WORK", "/c", dataFile)).toThrow("already exists");
+  });
+
+  it("allows case-different alias when caseSensitive is true", () => {
+    const config: TpConfig = { caseSensitive: true };
+    add("Work", "/a", dataFile, config);
+    const result = add("work", "/b", dataFile, config);
+    expect(result).toBe("Added: work -> /b");
+  });
+
   it("throws on duplicate path", () => {
     add("first", "/same", dataFile);
     expect(() => add("second", "/same", dataFile)).toThrow(CommandError);
@@ -146,6 +162,19 @@ describe("del", () => {
   it("throws on not found", () => {
     expect(() => del("nope", dataFile)).toThrow(CommandError);
     expect(() => del("nope", dataFile)).toThrow("not found");
+  });
+
+  it("deletes by case-insensitive alias by default", () => {
+    add("Work", "/work", dataFile);
+    const result = del("work", dataFile);
+    expect(result).toBe("Deleted: work");
+    expect(loadBookmarks(dataFile)).toHaveLength(0);
+  });
+
+  it("does not match case-different alias when caseSensitive is true", () => {
+    const config: TpConfig = { caseSensitive: true };
+    add("Work", "/work", dataFile, config);
+    expect(() => del("work", dataFile, config)).toThrow("not found");
   });
 });
 
@@ -219,6 +248,17 @@ describe("ch", () => {
     );
   });
 
+  it("renames by case-insensitive alias by default", () => {
+    add("Work", "/work", dataFile);
+    const result = ch("work", "project", dataFile);
+    expect(result).toBe("Renamed: 'work' -> 'project'");
+    expect(loadBookmarks(dataFile)[0].alias).toBe("project");
+  });
+
+  it("treats case-different old and new as same by default", () => {
+    expect(() => ch("work", "Work", dataFile)).toThrow("are the same");
+  });
+
   it("merges when new alias exists with same path", () => {
     const bookmarks: Bookmark[] = [
       { alias: "a", path: "/same", createdAt: 1 },
@@ -252,6 +292,18 @@ describe("go", () => {
     expect(() => go("nope", dataFile)).toThrow("not found");
   });
 
+  it("matches case-insensitive alias by default", () => {
+    add("rfc", tmpDir, dataFile);
+    expect(go("RFC", dataFile)).toBe(`__TP_CD__:${tmpDir}`);
+    expect(go("Rfc", dataFile)).toBe(`__TP_CD__:${tmpDir}`);
+  });
+
+  it("does not match case-different alias when caseSensitive is true", () => {
+    const config: TpConfig = { caseSensitive: true };
+    add("rfc", tmpDir, dataFile, config);
+    expect(() => go("RFC", dataFile, config)).toThrow("not found");
+  });
+
   it("throws when directory no longer exists", () => {
     const bookmarks: Bookmark[] = [
       { alias: "gone", path: "/nonexistent/dir/xyz", createdAt: 1 },
@@ -282,7 +334,7 @@ describe("list", () => {
 
 describe("version", () => {
   it("returns version string", () => {
-    expect(version()).toBe("1.2.1");
+    expect(version()).toBe("1.4.0");
   });
 });
 
@@ -312,5 +364,35 @@ describe("completions", () => {
     add("beta", "/beta", dataFile);
     const result = completions(dataFile);
     expect(result).toBe("beta\nalpha");
+  });
+});
+
+describe("getConfigFile", () => {
+  it("returns config.json in default data dir", () => {
+    expect(getConfigFile()).toBe(
+      path.join(os.homedir(), ".tp", "config.json")
+    );
+  });
+
+  it("returns config.json in custom data dir", () => {
+    expect(getConfigFile("/custom")).toBe("/custom/config.json");
+  });
+});
+
+describe("loadConfig", () => {
+  it("returns empty object when file does not exist", () => {
+    expect(loadConfig(path.join(tmpDir, "nonexistent.json"))).toEqual({});
+  });
+
+  it("returns parsed config from file", () => {
+    const configFile = path.join(tmpDir, "config.json");
+    fs.writeFileSync(configFile, JSON.stringify({ caseSensitive: true }));
+    expect(loadConfig(configFile)).toEqual({ caseSensitive: true });
+  });
+
+  it("returns empty object for invalid JSON", () => {
+    const configFile = path.join(tmpDir, "config.json");
+    fs.writeFileSync(configFile, "not json");
+    expect(loadConfig(configFile)).toEqual({});
   });
 });
