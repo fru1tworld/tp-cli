@@ -5,8 +5,8 @@ import * as path from "path";
 const root = path.resolve(__dirname, "../..");
 
 describe("Shell integration files", () => {
-  describe("tp.sh (Bash/Zsh)", () => {
-    const filePath = path.join(root, "tp.sh");
+  describe("tp.bash (Bash)", () => {
+    const filePath = path.join(root, "tp.bash");
 
     it("exists", () => {
       expect(fs.existsSync(filePath)).toBe(true);
@@ -28,17 +28,37 @@ describe("Shell integration files", () => {
       expect(content).toContain("--completions");
     });
 
+    it("registers completion", () => {
+      const content = fs.readFileSync(filePath, "utf-8");
+      expect(content).toContain("complete -F _tp_completions tp");
+    });
+  });
+
+  describe("tp.zsh (Zsh)", () => {
+    const filePath = path.join(root, "tp.zsh");
+
+    it("exists", () => {
+      expect(fs.existsSync(filePath)).toBe(true);
+    });
+
+    it("contains tp wrapper function", () => {
+      const content = fs.readFileSync(filePath, "utf-8");
+      expect(content).toContain("tp()");
+      expect(content).toContain("tp-cli");
+      expect(content).toContain("__TP_CD__:");
+      expect(content).toContain('cd "');
+    });
+
     it("contains Zsh completion function", () => {
       const content = fs.readFileSync(filePath, "utf-8");
       expect(content).toContain("_tp_completions_zsh()");
       expect(content).toContain("_values");
-      expect(content).toContain("compdef");
+      expect(content).toContain("--completions");
     });
 
-    it("detects shell type for completion registration", () => {
+    it("registers completion with compdef", () => {
       const content = fs.readFileSync(filePath, "utf-8");
-      expect(content).toContain("ZSH_VERSION");
-      expect(content).toContain("BASH_VERSION");
+      expect(content).toContain("compdef _tp_completions_zsh tp");
     });
   });
 

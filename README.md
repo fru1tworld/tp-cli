@@ -10,49 +10,39 @@ npm install -g @fru1tworld/tp
 
 Add the shell wrapper to your shell config:
 
+### Bash
+
+Add to your `~/.bashrc`:
+
 ```bash
-# Add to ~/.zshrc or ~/.bashrc
-tp() {
-    local output
-    output=$(tp-cli "$@")
-    if [[ "$output" == __TP_CD__:* ]]; then
-        cd "${output#__TP_CD__:}"
-    else
-        echo "$output"
-    fi
-}
-
-# Tab completion (Zsh)
-_tp_completions_zsh() {
-    local commands="add del ch gc list help"
-    local aliases=$(tp-cli --completions 2>/dev/null)
-    case "$words[2]" in
-        del|ch) _values 'alias' ${(f)aliases} ;;
-        add|gc|list|help) ;;
-        *) _values 'command' $commands ${(f)aliases} ;;
-    esac
-}
-compdef _tp_completions_zsh tp
-
-# Tab completion (Bash)
-_tp_completions() {
-    local cur="${COMP_WORDS[COMP_CWORD]}"
-    local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local commands="add del ch gc list help"
-    case "$prev" in
-        tp) COMPREPLY=($(compgen -W "$commands $(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
-        del|ch) COMPREPLY=($(compgen -W "$(tp-cli --completions 2>/dev/null)" -- "$cur")) ;;
-        *) COMPREPLY=() ;;
-    esac
-}
-complete -F _tp_completions tp
+source /path/to/tp.bash
+# Or after npm install -g:
+# source "$(npm root -g)/@fru1tworld/tp/tp.bash"
 ```
 
-Restart your terminal or run `source ~/.zshrc`.
+### Zsh
+
+Add to your `~/.zshrc`:
+
+```zsh
+source /path/to/tp.zsh
+# Or after npm install -g:
+# source "$(npm root -g)/@fru1tworld/tp/tp.zsh"
+```
+
+### Fish
+
+Add to your `~/.config/fish/config.fish`:
+
+```fish
+source /path/to/tp.fish
+# Or after npm install -g:
+# source (npm root -g)/@fru1tworld/tp/tp.fish
+```
 
 ### Nushell
 
-Add to your `config.nu` (usually `~/.config/nushell/config.nu`):
+Add to your `~/.config/nushell/config.nu`:
 
 ```nu
 source /path/to/tp.nu
@@ -60,15 +50,7 @@ source /path/to/tp.nu
 # source (npm root -g | str trim | path join "@fru1tworld/tp" "tp.nu")
 ```
 
-### Fish
-
-Add to your `config.fish` (usually `~/.config/fish/config.fish`):
-
-```fish
-source /path/to/tp.fish
-# Or after npm install -g:
-# source (npm root -g)/@fru1tworld/tp/tp.fish
-```
+Restart your terminal or re-source your config file.
 
 ## Tab Completion
 

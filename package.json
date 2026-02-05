@@ -36,7 +36,8 @@
   },
   "files": [
     "dist",
-    "tp.sh",
+    "tp.bash",
+    "tp.zsh",
     "tp.nu",
     "tp.fish"
   ]
