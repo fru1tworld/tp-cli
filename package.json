@@ -1,0 +1,44 @@
+{
+  "name": "@fru1tworld/tp",
+  "version": "1.4.0",
+  "description": "Teleport to bookmarked directories",
+  "main": "dist/index.js",
+  "bin": {
+    "tp-cli": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "cli",
+    "directory",
+    "bookmark",
+    "teleport",
+    "navigation"
+  ],
+  "author": "fru1tworld",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fru1tworld/tp-cli.git"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist",
+    "tp.bash",
+    "tp.zsh",
+    "tp.nu",
+    "tp.fish"
+  ]
+}
