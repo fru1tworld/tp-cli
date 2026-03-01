@@ -1,6 +1,6 @@
-import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
 export interface Bookmark {
   alias: string;
@@ -26,10 +26,23 @@ export function loadConfig(configFile: string): TpConfig {
 }
 
 function aliasMatch(a: string, b: string, caseSensitive: boolean): boolean {
-  if (caseSensitive) {
-    return a === b;
-  }
-  return a.toLowerCase() === b.toLowerCase();
+  return caseSensitive ? a === b : a.toLowerCase() === b.toLowerCase();
+}
+
+function findByAlias(
+  bookmarks: Bookmark[],
+  alias: string,
+  caseSensitive: boolean,
+): Bookmark | undefined {
+  return bookmarks.find((b) => aliasMatch(b.alias, alias, caseSensitive));
+}
+
+function findIndexByAlias(
+  bookmarks: Bookmark[],
+  alias: string,
+  caseSensitive: boolean,
+): number {
+  return bookmarks.findIndex((b) => aliasMatch(b.alias, alias, caseSensitive));
 }
 
 export class CommandError extends Error {
@@ -71,7 +84,7 @@ export function add(
   alias: string,
   cwd: string,
   dataFile: string,
-  config: TpConfig = {}
+  config: TpConfig = {},
 ): string {
   if (!alias) {
     throw new CommandError("Usage: tp add <alias>");
@@ -80,28 +93,21 @@ export function add(
   const caseSensitive = config.caseSensitive ?? false;
   const bookmarks = loadBookmarks(dataFile);
 
-  const existingAlias = bookmarks.find((b) =>
-    aliasMatch(b.alias, alias, caseSensitive)
-  );
+  const existingAlias = findByAlias(bookmarks, alias, caseSensitive);
   if (existingAlias) {
     throw new CommandError(
-      `Alias '${existingAlias.alias}' already exists. Use 'tp del ${existingAlias.alias}' first.`
+      `Alias '${existingAlias.alias}' already exists. Use 'tp del ${existingAlias.alias}' first.`,
     );
   }
 
   const existingPath = bookmarks.find((b) => b.path === cwd);
   if (existingPath) {
     throw new CommandError(
-      `This path is already registered as '${existingPath.alias}'.`
+      `This path is already registered as '${existingPath.alias}'.`,
     );
   }
 
-  bookmarks.unshift({
-    alias,
-    path: cwd,
-    createdAt: Date.now(),
-  });
-
+  bookmarks.unshift({ alias, path: cwd, createdAt: Date.now() });
   saveBookmarks(dataFile, bookmarks);
   return `Added: ${alias} -> ${cwd}`;
 }
@@ -109,7 +115,7 @@ export function add(
 export function del(
   alias: string,
   dataFile: string,
-  config: TpConfig = {}
+  config: TpConfig = {},
 ): string {
   if (!alias) {
     throw new CommandError("Usage: tp del <alias>");
@@ -117,9 +123,7 @@ export function del(
 
   const caseSensitive = config.caseSensitive ?? false;
   const bookmarks = loadBookmarks(dataFile);
-  const index = bookmarks.findIndex((b) =>
-    aliasMatch(b.alias, alias, caseSensitive)
-  );
+  const index = findIndexByAlias(bookmarks, alias, caseSensitive);
 
   if (index === -1) {
     throw new CommandError(`Alias '${alias}' not found.`);
@@ -132,37 +136,31 @@ export function del(
 
 export function gc(dataFile: string): string {
   const bookmarks = loadBookmarks(dataFile);
-  const invalidBookmarks: Bookmark[] = [];
-  const validBookmarks: Bookmark[] = [];
-
-  for (const b of bookmarks) {
-    if (fs.existsSync(b.path)) {
-      validBookmarks.push(b);
-    } else {
-      invalidBookmarks.push(b);
-    }
-  }
+  const validBookmarks = bookmarks.filter((b) => fs.existsSync(b.path));
+  const invalidBookmarks = bookmarks.filter((b) => !fs.existsSync(b.path));
 
   if (invalidBookmarks.length === 0) {
     return "No invalid bookmarks found. All directories exist.";
   }
 
-  const lines: string[] = [];
-  lines.push(`Found ${invalidBookmarks.length} invalid bookmark(s):\n`);
-  for (const b of invalidBookmarks) {
-    lines.push(`  ${b.alias.padEnd(15)} -> ${b.path}`);
-  }
+  const invalidList = invalidBookmarks
+    .map((b) => `  ${b.alias.padEnd(15)} -> ${b.path}`)
+    .join("\n");
 
   saveBookmarks(dataFile, validBookmarks);
-  lines.push(`\nRemoved ${invalidBookmarks.length} invalid bookmark(s).`);
-  return lines.join("\n");
+
+  return [
+    `Found ${invalidBookmarks.length} invalid bookmark(s):\n`,
+    invalidList,
+    `\nRemoved ${invalidBookmarks.length} invalid bookmark(s).`,
+  ].join("\n");
 }
 
 export function ch(
   oldAlias: string,
   newAlias: string,
   dataFile: string,
-  config: TpConfig = {}
+  config: TpConfig = {},
 ): string {
   if (!oldAlias || !newAlias) {
     throw new CommandError("Usage: tp ch <old_alias> <new_alias>");
@@ -175,34 +173,25 @@ export function ch(
   }
 
   const bookmarks = loadBookmarks(dataFile);
-  const index = bookmarks.findIndex((b) =>
-    aliasMatch(b.alias, oldAlias, caseSensitive)
-  );
+  const index = findIndexByAlias(bookmarks, oldAlias, caseSensitive);
 
   if (index === -1) {
     throw new CommandError(`Alias '${oldAlias}' not found.`);
   }
 
-  const existingNewAlias = bookmarks.find((b) =>
-    aliasMatch(b.alias, newAlias, caseSensitive)
-  );
+  const existingNewAlias = findByAlias(bookmarks, newAlias, caseSensitive);
   if (existingNewAlias) {
     if (existingNewAlias.path === bookmarks[index].path) {
-      const lines: string[] = [];
-      lines.push(
-        `'${oldAlias}' and '${newAlias}' point to the same directory: ${existingNewAlias.path}`
-      );
       bookmarks.splice(index, 1);
       saveBookmarks(dataFile, bookmarks);
-      lines.push(
-        `Removed duplicate alias '${oldAlias}'. Keeping '${newAlias}'.`
-      );
-      return lines.join("\n");
-    } else {
-      throw new CommandError(
-        `Alias '${newAlias}' already exists with a different path.`
-      );
+      return [
+        `'${oldAlias}' and '${newAlias}' point to the same directory: ${existingNewAlias.path}`,
+        `Removed duplicate alias '${oldAlias}'. Keeping '${newAlias}'.`,
+      ].join("\n");
     }
+    throw new CommandError(
+      `Alias '${newAlias}' already exists with a different path.`,
+    );
   }
 
   bookmarks[index].alias = newAlias;
@@ -213,7 +202,7 @@ export function ch(
 export function go(
   alias: string,
   dataFile: string,
-  config: TpConfig = {}
+  config: TpConfig = {},
 ): string {
   if (!alias) {
     throw new CommandError("Usage: tp <alias>");
@@ -221,9 +210,7 @@ export function go(
 
   const caseSensitive = config.caseSensitive ?? false;
   const bookmarks = loadBookmarks(dataFile);
-  const bookmark = bookmarks.find((b) =>
-    aliasMatch(b.alias, alias, caseSensitive)
-  );
+  const bookmark = findByAlias(bookmarks, alias, caseSensitive);
 
   if (!bookmark) {
     throw new CommandError(`Alias '${alias}' not found.`);
@@ -243,34 +230,31 @@ export function list(dataFile: string): string {
     return "No bookmarks yet. Use 'tp add <alias>' to add one.";
   }
 
-  const lines: string[] = [];
-  lines.push("Bookmarks (newest first):\n");
-  for (const b of bookmarks) {
-    const alias = b.alias.padEnd(15);
-    lines.push(`  ${alias} -> ${b.path}`);
-  }
-  return lines.join("\n");
+  const bookmarkList = bookmarks
+    .map((b) => `  ${b.alias.padEnd(15)} -> ${b.path}`)
+    .join("\n");
+
+  return `Bookmarks (newest first):\n\n${bookmarkList}`;
 }
 
 export function version(): string {
-  return "1.4.0";
+  const pkgPath = path.join(__dirname, "..", "package.json");
+  const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+  return pkg.version;
 }
 
 export function help(): string {
-  const lines: string[] = [];
-  lines.push("tp - Teleport to bookmarked directories\n");
-  lines.push("Usage:");
-  lines.push("  tp <alias>            Go to bookmarked directory");
-  lines.push("  tp add <alias>        Bookmark current directory");
-  lines.push("  tp del <alias>        Delete bookmark");
-  lines.push("  tp ch <old> <new>     Rename alias (or merge if same path)");
-  lines.push(
-    "  tp gc                 Remove bookmarks for non-existent directories"
-  );
-  lines.push("  tp list               Show all bookmarks");
-  lines.push("  tp help               Show this help");
-  lines.push("  tp -v, --version      Show version");
-  return lines.join("\n");
+  return `tp - Teleport to bookmarked directories
+
+Usage:
+  tp <alias>            Go to bookmarked directory
+  tp add <alias>        Bookmark current directory
+  tp del <alias>        Delete bookmark
+  tp ch <old> <new>     Rename alias (or merge if same path)
+  tp gc                 Remove bookmarks for non-existent directories
+  tp list               Show all bookmarks
+  tp help               Show this help
+  tp -v, --version      Show version`;
 }
 
 export function completions(dataFile: string): string {

@@ -10,7 +10,10 @@
     "build": "tsc",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "prepublishOnly": "npm run build"
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "format": "biome format --write src",
+    "prepublishOnly": "pnpm run build"
   },
   "keywords": [
     "cli",
@@ -26,6 +29,7 @@
     "url": "https://github.com/fru1tworld/tp-cli.git"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.4",
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^4.0.18",
     "typescript": "^5.7.0",

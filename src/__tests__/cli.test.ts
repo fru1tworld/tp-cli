@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { execSync } from "child_process";
-import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
-import { main } from "../index";
+import { execSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { CommandError } from "../commands";
+import { main } from "../index";
 
 let tmpDir: string;
 let dataFile: string;
@@ -108,21 +108,19 @@ describe("main() function", () => {
   it("respects caseSensitive config", () => {
     const config = { caseSensitive: true };
     main(["add", "rfc"], tmpDir, dataFile, config);
-    expect(() => main(["RFC"], tmpDir, dataFile, config)).toThrow(
-      CommandError
-    );
+    expect(() => main(["RFC"], tmpDir, dataFile, config)).toThrow(CommandError);
   });
 
   it("throws CommandError for unknown alias", () => {
-    expect(() => main(["nonexistent"], tmpDir, dataFile)).toThrow(
-      CommandError
-    );
+    expect(() => main(["nonexistent"], tmpDir, dataFile)).toThrow(CommandError);
   });
 });
 
 describe("CLI subprocess integration", () => {
   it("shows help with --help", () => {
-    expect(runCli("--help")).toContain("tp - Teleport to bookmarked directories");
+    expect(runCli("--help")).toContain(
+      "tp - Teleport to bookmarked directories",
+    );
   });
 
   it("shows version with --version", () => {

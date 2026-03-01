@@ -2,26 +2,26 @@
 
 import {
   add,
+  CommandError,
+  ch,
+  completions,
   del,
   gc,
-  ch,
-  go,
-  list,
-  version,
-  help,
-  completions,
-  getDataFile,
   getConfigFile,
+  getDataFile,
+  go,
+  help,
+  list,
   loadConfig,
-  CommandError,
-  TpConfig,
+  type TpConfig,
+  version,
 } from "./commands";
 
 export function main(
   args: string[],
   cwd: string,
   dataFile: string,
-  config: TpConfig = {}
+  config: TpConfig = {},
 ): string {
   const command = args[0];
 
@@ -61,7 +61,7 @@ if (require.main === module) {
       process.argv.slice(2),
       process.cwd(),
       getDataFile(),
-      config
+      config,
     );
     console.log(output);
   } catch (err) {

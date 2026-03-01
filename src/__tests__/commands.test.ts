@@ -1,27 +1,27 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import * as fs from "fs";
-import * as path from "path";
-import * as os from "os";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
-  Bookmark,
-  TpConfig,
-  CommandError,
-  getDataDir,
-  getDataFile,
-  getConfigFile,
-  loadConfig,
-  init,
-  loadBookmarks,
-  saveBookmarks,
   add,
+  type Bookmark,
+  CommandError,
+  ch,
+  completions,
   del,
   gc,
-  ch,
+  getConfigFile,
+  getDataDir,
+  getDataFile,
   go,
-  list,
-  version,
   help,
-  completions,
+  init,
+  list,
+  loadBookmarks,
+  loadConfig,
+  saveBookmarks,
+  type TpConfig,
+  version,
 } from "../commands";
 
 let tmpDir: string;
@@ -45,7 +45,7 @@ describe("getDataDir", () => {
 describe("getDataFile", () => {
   it("returns bookmarks.json in default data dir", () => {
     expect(getDataFile()).toBe(
-      path.join(os.homedir(), ".tp", "bookmarks.json")
+      path.join(os.homedir(), ".tp", "bookmarks.json"),
     );
   });
 
@@ -86,9 +86,7 @@ describe("loadBookmarks", () => {
 
 describe("saveBookmarks", () => {
   it("writes bookmarks to file", () => {
-    const bookmarks: Bookmark[] = [
-      { alias: "a", path: "/a", createdAt: 1 },
-    ];
+    const bookmarks: Bookmark[] = [{ alias: "a", path: "/a", createdAt: 1 }];
     saveBookmarks(dataFile, bookmarks);
     const data = JSON.parse(fs.readFileSync(dataFile, "utf-8"));
     expect(data).toEqual(bookmarks);
@@ -133,7 +131,7 @@ describe("add", () => {
     add("first", "/same", dataFile);
     expect(() => add("second", "/same", dataFile)).toThrow(CommandError);
     expect(() => add("second", "/same", dataFile)).toThrow(
-      "already registered"
+      "already registered",
     );
   });
 
@@ -182,9 +180,7 @@ describe("gc", () => {
   it("reports no invalid bookmarks when all valid", () => {
     add("tmp", tmpDir, dataFile);
     const result = gc(dataFile);
-    expect(result).toBe(
-      "No invalid bookmarks found. All directories exist."
-    );
+    expect(result).toBe("No invalid bookmarks found. All directories exist.");
   });
 
   it("removes invalid bookmarks", () => {
@@ -204,9 +200,7 @@ describe("gc", () => {
 
   it("handles empty bookmarks", () => {
     const result = gc(dataFile);
-    expect(result).toBe(
-      "No invalid bookmarks found. All directories exist."
-    );
+    expect(result).toBe("No invalid bookmarks found. All directories exist.");
   });
 });
 
@@ -244,7 +238,7 @@ describe("ch", () => {
     add("b", "/b", dataFile);
     expect(() => ch("a", "b", dataFile)).toThrow(CommandError);
     expect(() => ch("a", "b", dataFile)).toThrow(
-      "already exists with a different path"
+      "already exists with a different path",
     );
   });
 
@@ -369,9 +363,7 @@ describe("completions", () => {
 
 describe("getConfigFile", () => {
   it("returns config.json in default data dir", () => {
-    expect(getConfigFile()).toBe(
-      path.join(os.homedir(), ".tp", "config.json")
-    );
+    expect(getConfigFile()).toBe(path.join(os.homedir(), ".tp", "config.json"));
   });
 
   it("returns config.json in custom data dir", () => {
