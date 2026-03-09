@@ -2,6 +2,10 @@
 
 디렉토리를 북마크하고 순간이동하는 CLI 도구
 
+## Tech Stack
+
+`TypeScript` `Node.js` `Vitest` `Biome`
+
 ## 설치
 
 ```bash
