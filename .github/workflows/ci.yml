@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        node: [20, 22]
+        node: [20, 22, 24]
 
     runs-on: ${{ matrix.os }}
 
@@ -25,7 +25,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -52,5 +52,12 @@ jobs:
           tp-cli list
           tp-cli add testdir
           tp-cli list
+          tp-cli list -r
           tp-cli del testdir
           tp-cli list
+          for shell in bash zsh fish nu; do tp-cli init "$shell" > /dev/null; done
+          mkdir -p "$HOME/tp-smoke"
+          eval "$(tp-cli init bash)"
+          cd "$HOME/tp-smoke" && tp add smoke
+          cd / && tp smoke
+          test "$(pwd -P)" = "$(cd "$HOME/tp-smoke" && pwd -P)"

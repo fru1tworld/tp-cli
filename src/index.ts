@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
+import { argv, exit, cwd as processCwd } from "node:process";
+import { fileURLToPath } from "node:url";
 import {
   add,
   CommandError,
@@ -13,29 +16,34 @@ import {
   help,
   list,
   loadConfig,
+  parseListOrder,
+  shellInit,
   type TpConfig,
   version,
-} from "./commands";
+} from "./commands.js";
 
 export function main(
-  args: string[],
+  args: readonly string[],
   cwd: string,
   dataFile: string,
   config: TpConfig = {},
 ): string {
-  const command = args[0];
+  const [command, ...rest] = args;
 
   switch (command) {
     case "add":
-      return add(args[1], cwd, dataFile, config);
+      return add(rest[0], cwd, dataFile, config);
     case "del":
-      return del(args[1], dataFile, config);
+      return del(rest[0], dataFile, config);
     case "ch":
-      return ch(args[1], args[2], dataFile, config);
+      return ch(rest[0], rest[1], dataFile, config);
     case "gc":
       return gc(dataFile);
+    case "init":
+      return shellInit(rest[0]);
+    case undefined:
     case "list":
-      return list(dataFile);
+      return list(dataFile, parseListOrder(rest[0]));
     case "help":
     case "-h":
     case "--help":
@@ -45,29 +53,21 @@ export function main(
       return version();
     case "--completions":
       return completions(dataFile);
-    case undefined:
-      return list(dataFile);
     default:
       return go(command, dataFile, config);
   }
 }
 
 /* v8 ignore start -- entry point bootstrap, tested via subprocess in cli.test.ts */
-if (require.main === module) {
+// The npm global bin is a symlink, so argv[1] differs from the module path.
+if (realpathSync(argv[1]) === fileURLToPath(import.meta.url)) {
   try {
-    const configFile = getConfigFile();
-    const config = loadConfig(configFile);
-    const output = main(
-      process.argv.slice(2),
-      process.cwd(),
-      getDataFile(),
-      config,
-    );
-    console.log(output);
+    const config = loadConfig(getConfigFile());
+    console.log(main(argv.slice(2), processCwd(), getDataFile(), config));
   } catch (err) {
     if (err instanceof CommandError) {
       console.log(err.message);
-      process.exit(1);
+      exit(1);
     }
     throw err;
   }

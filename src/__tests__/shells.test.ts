@@ -1,8 +1,9 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const root = path.resolve(__dirname, "../..");
+const root = fileURLToPath(new URL("../..", import.meta.url));
 
 describe("Shell integration files", () => {
   describe("tp.bash (Bash)", () => {
@@ -32,6 +33,11 @@ describe("Shell integration files", () => {
       const content = fs.readFileSync(filePath, "utf-8");
       expect(content).toContain("complete -F _tp_completions tp");
     });
+
+    it("completes list order flags", () => {
+      const content = fs.readFileSync(filePath, "utf-8");
+      expect(content).toContain("-u --utf8 -r --recent");
+    });
   });
 
   describe("tp.zsh (Zsh)", () => {
@@ -60,6 +66,11 @@ describe("Shell integration files", () => {
       const content = fs.readFileSync(filePath, "utf-8");
       expect(content).toContain("compdef _tp_completions_zsh tp");
     });
+
+    it("completes list order flags", () => {
+      const content = fs.readFileSync(filePath, "utf-8");
+      expect(content).toContain("_values 'order' -u --utf8 -r --recent");
+    });
   });
 
   describe("tp.nu (Nushell)", () => {
@@ -79,11 +90,22 @@ describe("Shell integration files", () => {
       expect(content).toContain("cd");
     });
 
-    it("contains completion functions", () => {
+    it("contains completion function", () => {
       const content = fs.readFileSync(filePath, "utf-8");
       expect(content).toContain("nu-complete tp commands");
-      expect(content).toContain("nu-complete tp aliases");
       expect(content).toContain("--completions");
+    });
+
+    it("wires the completer to the tp arguments", () => {
+      const content = fs.readFileSync(filePath, "utf-8");
+      expect(content).toContain('...args: string@"nu-complete tp commands"');
+    });
+
+    it("defines the completer before tp uses it", () => {
+      const content = fs.readFileSync(filePath, "utf-8");
+      expect(content.indexOf('def "nu-complete tp commands"')).toBeLessThan(
+        content.indexOf("def --env tp"),
+      );
     });
 
     it("includes all tp subcommands", () => {
@@ -130,6 +152,16 @@ describe("Shell integration files", () => {
     it("provides alias completion for del and ch", () => {
       const content = fs.readFileSync(filePath, "utf-8");
       expect(content).toContain("__fish_seen_subcommand_from del ch");
+    });
+
+    it("completes list order flags", () => {
+      const content = fs.readFileSync(filePath, "utf-8");
+      expect(content).toContain(
+        "__fish_seen_subcommand_from list' -s u -l utf8",
+      );
+      expect(content).toContain(
+        "__fish_seen_subcommand_from list' -s r -l recent",
+      );
     });
   });
 });

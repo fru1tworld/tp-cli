@@ -1,11 +1,7 @@
 # tp - Zsh shell wrapper for tp directory bookmarks
-# Add to your ~/.zshrc:
-#   source /path/to/tp.zsh
-#
-# Or after npm install -g:
-#   source "$(npm root -g)/@fru1tworld/tp/tp.zsh"
+# Add to your ~/.zshrc, after compinit:
+#   eval "$(tp-cli init zsh)"
 
-# Shell wrapper function
 tp() {
     local output
     output=$(tp-cli "$@")
@@ -18,7 +14,6 @@ tp() {
     fi
 }
 
-# Tab completion
 _tp_completions_zsh() {
     local commands="add del ch gc list help"
     local aliases=$(tp-cli --completions 2>/dev/null)
@@ -27,7 +22,10 @@ _tp_completions_zsh() {
         del|ch)
             _values 'alias' ${(f)aliases}
             ;;
-        add|gc|list|help)
+        list)
+            _values 'order' -u --utf8 -r --recent
+            ;;
+        add|gc|help)
             ;;
         *)
             _values 'command' $commands ${(f)aliases}
@@ -35,4 +33,5 @@ _tp_completions_zsh() {
     esac
 }
 
-compdef _tp_completions_zsh tp
+# compdef does not exist until compinit has run
+(( $+functions[compdef] )) && compdef _tp_completions_zsh tp

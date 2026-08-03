@@ -1,6 +1,7 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   add,
@@ -19,10 +20,13 @@ import {
   list,
   loadBookmarks,
   loadConfig,
+  parseListOrder,
+  SUPPORTED_SHELLS,
   saveBookmarks,
+  shellInit,
   type TpConfig,
   version,
-} from "../commands";
+} from "../commands.js";
 
 let tmpDir: string;
 let dataFile: string;
@@ -314,21 +318,65 @@ describe("list", () => {
     expect(result).toBe("No bookmarks yet. Use 'tp add <alias>' to add one.");
   });
 
-  it("lists bookmarks", () => {
-    add("a", "/a", dataFile);
-    add("b", "/b", dataFile);
+  it("lists bookmarks in UTF-8 byte order by default", () => {
+    add("beta", "/b", dataFile);
+    add("alpha", "/a", dataFile);
     const result = list(dataFile);
+    expect(result).toContain("Bookmarks (UTF-8 order):");
+    expect(result.indexOf("alpha")).toBeLessThan(result.indexOf("beta"));
+  });
+
+  it("sorts uppercase before lowercase and ASCII before Hangul", () => {
+    add("Zebra", "/Z", dataFile);
+    add("apple", "/a", dataFile);
+    add("가나", "/ga", dataFile);
+    const result = list(dataFile);
+    expect(result.indexOf("Zebra")).toBeLessThan(result.indexOf("apple"));
+    expect(result.indexOf("apple")).toBeLessThan(result.indexOf("가나"));
+  });
+
+  it("lists bookmarks newest first when order is recent", () => {
+    add("alpha", "/a", dataFile);
+    add("beta", "/b", dataFile);
+    const result = list(dataFile, "recent");
     expect(result).toContain("Bookmarks (newest first):");
-    expect(result).toContain("a");
-    expect(result).toContain("/a");
-    expect(result).toContain("b");
-    expect(result).toContain("/b");
+    expect(result.indexOf("beta")).toBeLessThan(result.indexOf("alpha"));
+  });
+
+  it("keeps stored order untouched when sorting", () => {
+    add("beta", "/b", dataFile);
+    add("alpha", "/a", dataFile);
+    list(dataFile);
+    expect(loadBookmarks(dataFile).map((b) => b.alias)).toEqual([
+      "alpha",
+      "beta",
+    ]);
+  });
+});
+
+describe("parseListOrder", () => {
+  it("defaults to utf8", () => {
+    expect(parseListOrder(undefined)).toBe("utf8");
+  });
+
+  it("accepts recent flags", () => {
+    expect(parseListOrder("-r")).toBe("recent");
+    expect(parseListOrder("--recent")).toBe("recent");
+  });
+
+  it("accepts utf8 flags", () => {
+    expect(parseListOrder("-u")).toBe("utf8");
+    expect(parseListOrder("--utf8")).toBe("utf8");
+  });
+
+  it("throws on unknown flag", () => {
+    expect(() => parseListOrder("--nope")).toThrow(CommandError);
   });
 });
 
 describe("version", () => {
   it("returns version string", () => {
-    expect(version()).toBe("1.4.0");
+    expect(version()).toBe("2.0.0");
   });
 });
 
@@ -342,8 +390,36 @@ describe("help", () => {
     expect(result).toContain("tp ch <old> <new>");
     expect(result).toContain("tp gc");
     expect(result).toContain("tp list");
+    expect(result).toContain("tp list -r");
     expect(result).toContain("tp help");
     expect(result).toContain("tp -v, --version");
+  });
+});
+
+describe("shellInit", () => {
+  it("prints the wrapper for every supported shell", () => {
+    for (const shell of SUPPORTED_SHELLS) {
+      expect(shellInit(shell)).toContain("tp-cli");
+      expect(shellInit(shell)).toContain("__TP_CD__:");
+    }
+  });
+
+  it("matches the shipped shell file", () => {
+    const shipped = fs.readFileSync(
+      path.join(fileURLToPath(new URL("../..", import.meta.url)), "tp.zsh"),
+      "utf-8",
+    );
+    expect(shellInit("zsh")).toBe(shipped.trimEnd());
+  });
+
+  it("throws when shell is missing", () => {
+    expect(() => shellInit(undefined)).toThrow(CommandError);
+    expect(() => shellInit(undefined)).toThrow("Usage: tp-cli init");
+  });
+
+  it("throws on unsupported shell", () => {
+    expect(() => shellInit("powershell")).toThrow(CommandError);
+    expect(() => shellInit("powershell")).toThrow("bash|zsh|fish|nu");
   });
 });
 
@@ -382,9 +458,10 @@ describe("loadConfig", () => {
     expect(loadConfig(configFile)).toEqual({ caseSensitive: true });
   });
 
-  it("returns empty object for invalid JSON", () => {
+  it("throws for invalid JSON", () => {
     const configFile = path.join(tmpDir, "config.json");
     fs.writeFileSync(configFile, "not json");
-    expect(loadConfig(configFile)).toEqual({});
+    expect(() => loadConfig(configFile)).toThrow(CommandError);
+    expect(() => loadConfig(configFile)).toThrow("Invalid JSON in config file");
   });
 });

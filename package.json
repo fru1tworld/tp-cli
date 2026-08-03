@@ -1,7 +1,8 @@
 {
   "name": "@fru1tworld/tp",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "Teleport to bookmarked directories",
+  "type": "module",
   "main": "dist/index.js",
   "bin": {
     "tp-cli": "dist/index.js"
@@ -29,11 +30,11 @@
     "url": "https://github.com/fru1tworld/tp-cli.git"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.4",
-    "@types/node": "^22.0.0",
-    "@vitest/coverage-v8": "^4.0.18",
-    "typescript": "^5.7.0",
-    "vitest": "^4.0.18"
+    "@biomejs/biome": "^2.5.6",
+    "@types/node": "^26.1.2",
+    "@vitest/coverage-v8": "^4.1.10",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
   },
   "engines": {
     "node": ">=20.0.0"

@@ -2,13 +2,14 @@ import { execSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { CommandError } from "../commands";
-import { main } from "../index";
+import { CommandError } from "../commands.js";
+import { main } from "../index.js";
 
 let tmpDir: string;
 let dataFile: string;
-const cliPath = path.resolve(__dirname, "../../dist/index.js");
+const cliPath = fileURLToPath(new URL("../../dist/index.js", import.meta.url));
 
 function runCli(args: string): string {
   try {
@@ -49,16 +50,28 @@ describe("main() function", () => {
   });
 
   it("routes -v flag", () => {
-    expect(main(["-v"], tmpDir, dataFile)).toBe("1.4.0");
+    expect(main(["-v"], tmpDir, dataFile)).toBe("2.0.0");
   });
 
   it("routes --version flag", () => {
-    expect(main(["--version"], tmpDir, dataFile)).toBe("1.4.0");
+    expect(main(["--version"], tmpDir, dataFile)).toBe("2.0.0");
   });
 
   it("routes list command", () => {
     const output = main(["list"], tmpDir, dataFile);
     expect(output).toContain("No bookmarks yet");
+  });
+
+  it("routes list -r to recent order", () => {
+    main(["add", "zulu"], tmpDir, dataFile);
+    const output = main(["list", "-r"], tmpDir, dataFile);
+    expect(output).toContain("Bookmarks (newest first):");
+  });
+
+  it("rejects unknown list flag", () => {
+    expect(() => main(["list", "--nope"], tmpDir, dataFile)).toThrow(
+      "Usage: tp list",
+    );
   });
 
   it("routes undefined (no args) to list", () => {
@@ -86,6 +99,17 @@ describe("main() function", () => {
   it("routes gc command", () => {
     const output = main(["gc"], tmpDir, dataFile);
     expect(output).toContain("No invalid bookmarks");
+  });
+
+  it("routes init command", () => {
+    const output = main(["init", "zsh"], tmpDir, dataFile);
+    expect(output).toContain("compdef _tp_completions_zsh tp");
+  });
+
+  it("rejects init without a shell", () => {
+    expect(() => main(["init"], tmpDir, dataFile)).toThrow(
+      "Usage: tp-cli init",
+    );
   });
 
   it("routes --completions", () => {
@@ -124,7 +148,7 @@ describe("CLI subprocess integration", () => {
   });
 
   it("shows version with --version", () => {
-    expect(runCli("--version")).toBe("1.4.0");
+    expect(runCli("--version")).toBe("2.0.0");
   });
 
   it("shows empty list", () => {
