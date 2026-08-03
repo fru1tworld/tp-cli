@@ -149,9 +149,12 @@ export function del(
 }
 
 export function gc(dataFile: string): string {
-  const bookmarks = loadBookmarks(dataFile);
-  const alive = bookmarks.filter((b) => existsSync(b.path));
-  const dead = bookmarks.filter((b) => !existsSync(b.path));
+  const alive: Bookmark[] = [];
+  const dead: Bookmark[] = [];
+
+  for (const bookmark of loadBookmarks(dataFile)) {
+    (existsSync(bookmark.path) ? alive : dead).push(bookmark);
+  }
 
   if (dead.length === 0) {
     return "No invalid bookmarks found. All directories exist.";
@@ -254,6 +257,24 @@ function compareUtf8(a: string, b: string): number {
   return Buffer.from(a, "utf-8").compare(Buffer.from(b, "utf-8"));
 }
 
+const LIST_ORDERS = {
+  utf8: {
+    header: "UTF-8 order",
+    sort: (bookmarks: readonly Bookmark[]) =>
+      bookmarks.toSorted((a, b) => compareUtf8(a.alias, b.alias)),
+  },
+  recent: {
+    header: "newest first",
+    sort: (bookmarks: readonly Bookmark[]) => bookmarks,
+  },
+} as const satisfies Record<
+  ListOrder,
+  {
+    header: string;
+    sort: (bookmarks: readonly Bookmark[]) => readonly Bookmark[];
+  }
+>;
+
 export function list(dataFile: string, order: ListOrder = "utf8"): string {
   const bookmarks = loadBookmarks(dataFile);
 
@@ -261,13 +282,8 @@ export function list(dataFile: string, order: ListOrder = "utf8"): string {
     return "No bookmarks yet. Use 'tp add <alias>' to add one.";
   }
 
-  const ordered =
-    order === "recent"
-      ? bookmarks
-      : bookmarks.toSorted((a, b) => compareUtf8(a.alias, b.alias));
-
-  const header = order === "recent" ? "newest first" : "UTF-8 order";
-  return `Bookmarks (${header}):\n\n${formatBookmarks(ordered)}`;
+  const { header, sort } = LIST_ORDERS[order];
+  return `Bookmarks (${header}):\n\n${formatBookmarks(sort(bookmarks))}`;
 }
 
 function packageRoot(): string {
@@ -284,12 +300,12 @@ export const SUPPORTED_SHELLS = ["bash", "zsh", "fish", "nu"] as const;
 
 export type Shell = (typeof SUPPORTED_SHELLS)[number];
 
-function isShell(value: string): value is Shell {
-  return (SUPPORTED_SHELLS as readonly string[]).includes(value);
+function isShell(value: string | undefined): value is Shell {
+  return SUPPORTED_SHELLS.some((shell) => shell === value);
 }
 
 export function shellInit(shell?: string): string {
-  if (shell === undefined || !isShell(shell)) {
+  if (!isShell(shell)) {
     throw new CommandError(
       `Usage: tp-cli init <${SUPPORTED_SHELLS.join("|")}>`,
     );

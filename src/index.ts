@@ -58,7 +58,7 @@ export function main(
   }
 }
 
-/* v8 ignore start -- entry point bootstrap, tested via subprocess in cli.test.ts */
+/* v8 ignore start */
 // The npm global bin is a symlink, so argv[1] differs from the module path.
 if (realpathSync(argv[1]) === fileURLToPath(import.meta.url)) {
   try {
